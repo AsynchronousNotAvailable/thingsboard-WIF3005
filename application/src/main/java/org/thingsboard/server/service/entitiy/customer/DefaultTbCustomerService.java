@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.customer;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,11 +26,15 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class DefaultTbCustomerService extends AbstractTbEntityService implements TbCustomerService {
+
+    private final InstallScripts installScripts;
 
     @Override
     public Customer save(Customer customer, SecurityUser user) throws Exception {
@@ -38,10 +43,20 @@ public class DefaultTbCustomerService extends AbstractTbEntityService implements
 
     @Override
     public Customer save(Customer customer, NameConflictStrategy nameConflictStrategy, SecurityUser user) throws Exception {
-        ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
+        boolean created = customer.getId() == null;
+        ActionType actionType = created ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
         try {
             Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer, nameConflictStrategy));
+            if (created) {
+                // create opinionated minimal dashboards for newly created customers
+                try {
+                    installScripts.createDefaultCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
+                } catch (Exception e) {
+                    // Log and continue; dashboard creation should not block customer creation
+                    log.warn("Failed to create default customer dashboards", e);
+                }
+            }
             autoCommit(user, savedCustomer.getId());
             logEntityActionService.logEntityAction(tenantId, savedCustomer.getId(), savedCustomer, null, actionType, user);
             return savedCustomer;
