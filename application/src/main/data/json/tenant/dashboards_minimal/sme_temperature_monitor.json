@@ -1,0 +1,11 @@
+{
+  "title": "SME Temperature Monitor",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "widgets": {},
+    "entityAliases": {},
+    "states": {}
+  }
+}

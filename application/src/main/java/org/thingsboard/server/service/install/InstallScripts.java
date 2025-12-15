@@ -85,6 +85,7 @@ public class InstallScripts {
     public static final String SCADA_SYMBOLS_DIR = "scada_symbols";
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
+    public static final String DASHBOARDS_MINIMAL_DIR = "dashboards_minimal";
     public static final String MODELS_LWM2M_DIR = "lwm2m-registry";
     public static final String RESOURCES_DIR = "resources";
 
@@ -94,6 +95,9 @@ public class InstallScripts {
 
     @Value("${install.data_dir:}")
     private String dataDir;
+
+    @Value("${install.tenant_dashboards_set:minimal}")
+    private String tenantDashboardsSet;
 
     @Autowired
     private RuleChainService ruleChainService;
@@ -416,7 +420,23 @@ public class InstallScripts {
     }
 
     public void createDefaultTenantDashboards(TenantId tenantId, CustomerId customerId) {
-        Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
+        Path dashboardsDir;
+        if ("minimal".equalsIgnoreCase(tenantDashboardsSet)) {
+            dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_MINIMAL_DIR);
+        } else {
+            dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
+        }
+        loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
+    }
+
+    public void createDefaultCustomerDashboards(TenantId tenantId, CustomerId customerId) {
+        // Reuse tenant dashboard loading logic but assign dashboards to the provided customer
+        Path dashboardsDir;
+        if ("minimal".equalsIgnoreCase(tenantDashboardsSet)) {
+            dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_MINIMAL_DIR);
+        } else {
+            dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
+        }
         loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
     }
 

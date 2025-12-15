@@ -1,0 +1,11 @@
+{
+  "title": "Asset Heartbeat",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "widgets": {},
+    "entityAliases": {},
+    "states": {}
+  }
+}
